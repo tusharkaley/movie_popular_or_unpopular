@@ -3,6 +3,8 @@ import os
 import pandas
 import ast
 import operator
+import matplotlib.pyplot as plt
+import numpy as np
 
 from json import loads
 
@@ -76,6 +78,32 @@ def get_directors():
         print(count)
 
 
+def get_writers():
+    file_name = "credits.csv"
+    dataset = pandas.read_csv(file_name)
+    data = list()
+    csv_name = "writing"
+    crew = list()
+    count = 0
+    data.append("id")
+    data.append("writer")
+    append_to_csv([data], csv_name=csv_name)
+    for row in dataset.itertuples():
+        data[:] = []
+        count +=1
+        data.append(row.id)
+        movie_crew = row.crew
+        movie_crew = ast.literal_eval(movie_crew)
+        for crew_mem in movie_crew:
+            if crew_mem["department"] == "Writing" and crew_mem["job"] == "Screenplay":
+                crew.append(crew_mem["name"].encode("utf-8"))
+
+        data.append(crew)
+        append_to_csv([data], csv_name=csv_name)
+        crew = list()
+        print(count)
+
+
 def get_genres(dataset):
 
     genres_list = list()
@@ -128,7 +156,7 @@ def get_production_houses(dataset):
             prod_houses_list.append(tup[0])
         else:
             break
-    prod_houses_list = prod_houses_list +["other_prod_houses"]
+    prod_houses_list = prod_houses_list
 
     return prod_houses_list
 
@@ -236,8 +264,6 @@ def get_director_insights(threshold):
             else:
                 castmems[person] = castmems[person]+ 1
     sorted_x = sorted(castmems.items(), key=operator.itemgetter(1), reverse=True)
-    print(len(sorted_x))
-    print(sorted_x)
     line_count = 0
     top_500 = list()
     for i in sorted_x:
@@ -265,7 +291,7 @@ def get_movie_id_to_cast_dict():
 
 def get_movie_id_to_director_dict():
     url = "directing.csv"
-    castmems = dict()
+    directors = dict()
     dataset = pandas.read_csv(url)
     for row in dataset.itertuples():
         # print(type(row.cast_mems.split('b"')[1]))
@@ -273,11 +299,26 @@ def get_movie_id_to_director_dict():
         test = test.replace(", b'", ", '")
         test = test.replace("[b'", "['")
         test = ast.literal_eval(test)
-        castmems[row.id] = test
-    return castmems
+        directors[row.id] = test
+    return directors
+
+
+def get_movie_id_to_writer_dict():
+    url = "writing.csv"
+    writers = dict()
+    dataset = pandas.read_csv(url)
+    for row in dataset.itertuples():
+        # print(type(row.cast_mems.split('b"')[1]))
+        test = row.writer
+        test = test.replace(", b'", ", '")
+        test = test.replace("[b'", "['")
+        test = ast.literal_eval(test)
+        writers[row.id] = test
+    return writers
 
 
 def get_actor_pop_unpop_ratio(threshold):
+
     id_to_cast = get_movie_id_to_cast_dict()
     file_name = "movies_metadata.csv"
     dataset = pandas.read_csv(file_name)
@@ -303,27 +344,23 @@ def get_actor_pop_unpop_ratio(threshold):
                     else:
                         cast_to_unpop_count[person] += 1
 
-    sorted_pop = sorted(cast_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
-    sorted_unpop = sorted(cast_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
-    pop_count = 0
-    unpop_count = 0
-    pop_cast_list = list()
-    unpop_cast_list = list()
-    print("POPULAR NUMBERS")
-    for i in sorted_pop:
-        pop_count+=1
-        print("{}: {}".format(i[0], i[1]))
-        pop_cast_list.append((i[0]))
-        if pop_count>threshold:
-            break
-
-    print("UNPOPULAR NUMBERS")
-    for i in sorted_unpop:
-        unpop_count+=1
-        print("{}: {}".format(i[0], i[1]))
-        unpop_cast_list.append((i[0]))
-        if unpop_count>threshold:
-            break
+    # sorted_pop = sorted(cast_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
+    # sorted_unpop = sorted(cast_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
+    # pop_count = 0
+    # unpop_count = 0
+    # pop_cast_list = list()
+    # unpop_cast_list = list()
+    # for i in sorted_pop:
+    #     pop_count+=1
+    #     pop_cast_list.append((i[0]))
+    #     if pop_count>threshold:
+    #         break
+    #
+    # for i in sorted_unpop:
+    #     unpop_count+=1
+    #     unpop_cast_list.append((i[0]))
+    #     if unpop_count>threshold:
+    #         break
 
     return cast_to_pop_count, cast_to_unpop_count
 
@@ -354,29 +391,248 @@ def get_director_pop_unpop_ratio(threshold=200):
                     else:
                         director_to_unpop_count[person] += 1
 
-    sorted_pop = sorted(director_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
-    sorted_unpop = sorted(director_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
-    pop_count = 0
-    unpop_count = 0
-    pop_cast_list = list()
-    unpop_cast_list = list()
-    print("POPULAR NUMBERS")
-    for i in sorted_pop:
-        pop_count+=1
-        print("{}: {}".format(i[0], i[1]))
-        pop_cast_list.append((i[0]))
-        if pop_count>threshold:
-            break
-
-    print("UNPOPULAR NUMBERS")
-    for i in sorted_unpop:
-        unpop_count+=1
-        print("{}: {}".format(i[0], i[1]))
-        unpop_cast_list.append((i[0]))
-        if unpop_count>threshold:
-            break
+    # sorted_pop = sorted(director_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
+    # sorted_unpop = sorted(director_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
+    # pop_count = 0
+    # unpop_count = 0
+    # pop_cast_list = list()
+    # unpop_cast_list = list()
+    # for i in sorted_pop:
+    #     pop_count+=1
+    #     pop_cast_list.append((i[0]))
+    #     if pop_count > threshold:
+    #         break
+    #
+    # for i in sorted_unpop:
+    #     unpop_count+=1
+    #     unpop_cast_list.append((i[0]))
+    #     if unpop_count>threshold:
+    #         break
 
     return director_to_pop_count, director_to_unpop_count
 
+
+def get_writers_pop_unpop_ratio(threshold):
+
+    id_to_writer = get_movie_id_to_writer_dict()
+    file_name = "movies_metadata.csv"
+    dataset = pandas.read_csv(file_name)
+    rogue_ids = ["1997-08-20", "2012-09-29", "2014-01-01"]
+    writer_to_pop_count = dict()
+    writer_to_unpop_count = dict()
+    for row in dataset.itertuples():
+
+        if row.id in rogue_ids:
+            continue
+        id = int(row.id)
+        if id in id_to_writer:
+            movie_cast = id_to_writer[id]
+            for person in movie_cast:
+                if row.vote_average >= 6.0:
+                    if person not in writer_to_pop_count:
+                        writer_to_pop_count[person] = 1
+                    else:
+                        writer_to_pop_count[person] += 1
+                else:
+                    if person not in writer_to_unpop_count:
+                        writer_to_unpop_count[person] = 1
+                    else:
+                        writer_to_unpop_count[person] += 1
+
+    # sorted_pop = sorted(writer_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
+    # sorted_unpop = sorted(writer_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
+    # pop_count = 0
+    # unpop_count = 0
+    # pop_cast_list = list()
+    # unpop_cast_list = list()
+    # for i in sorted_pop:
+    #     pop_count+=1
+    #     pop_cast_list.append((i[0]))
+    #     if pop_count>threshold:
+    #         break
+    #
+    # for i in sorted_unpop:
+    #     unpop_count+=1
+    #     unpop_cast_list.append((i[0]))
+    #     if unpop_count>threshold:
+    #         break
+
+    return writer_to_pop_count, writer_to_unpop_count
+
+
+def get_prod_comps_pop_unpop_ratio():
+
+    file_name = "movies_metadata.csv"
+    dataset = pandas.read_csv(file_name)
+    prod_comps_to_pop_count = dict()
+    prod_comps_to_unpop_count = dict()
+    count = 0
+    for row in dataset.itertuples():
+        test = row.production_companies
+        process_prod_comp = True
+        # pc_added = False
+        temp_prod_companies_list = list()
+        if type(test) == str and len(test) != 2:
+            test = test.replace("\'", "\"")
+            try:
+                test = loads(test)
+            except:
+                pass
+                process_prod_comp = False
+            if process_prod_comp:
+                count +=1
+                for a in test:
+                    temp_prod_companies_list.append(a["name"])
+                for pc in temp_prod_companies_list:
+                    if row.vote_average >= 6.0:
+                        if pc not in prod_comps_to_pop_count:
+                            prod_comps_to_pop_count[pc] = 1
+                        else:
+                            prod_comps_to_pop_count[pc] += 1
+                    else:
+                        if pc not in prod_comps_to_unpop_count:
+                            prod_comps_to_unpop_count[pc] = 1
+                        else:
+                            prod_comps_to_unpop_count[pc] += 1
+    print("Processed count: {}".format(count))
+    print(prod_comps_to_pop_count)
+    print(prod_comps_to_unpop_count)
+    return prod_comps_to_pop_count, prod_comps_to_unpop_count
+
+def movie_runtime_plot():
+    file_name = "movies_metadata.csv"
+    dataset = pandas.read_csv(file_name)
+    x = list()
+    y = list()
+    for row in dataset.itertuples():
+        y.append(row.runtime)
+        x.append(row.vote_average)
+    plt.ylim(0, 200)
+    plt.scatter(x, y)
+    plt.show()
+
+
+def prod_comps_plot(pop_list):
+
+    pop_list.sort()
+    seed = 100
+    offset = 100
+    count = 0
+    x = list()
+    for p in pop_list:
+        if p < seed:
+            count+=1
+        else:
+            seed = seed + offset
+            x.append(count)
+            count = 0
+    print(x)
+
+
+# def original_lang():
+
+def prod_comps():
+    objects = ('<100', '100-200', '200-300', '300-400', '400-500', '500-600', '700-800', '800-900', '900-1000', '1000-1100', '1100-1200', '1200-1300', '1300-1400','1400-1500', '1500-1600')
+    y_pos = np.arange(len(objects))
+    performance = [12417, 1341, 879, 158, 523, 109, 71, 26, 868, 99, 1126, 35, 580, 132, 32]
+
+    plt.figure(figsize=(15, 5))
+    plt.bar(y_pos, performance, align='center', alpha=0.5)
+    plt.xticks(y_pos, objects)
+    plt.ylabel('Distribution of popular movies')
+    plt.title('Number of production houses')
+
+    plt.show()
+
+def plot_top_companies():
+
+    file_name = "movies_metadata.csv"
+    dataset = pandas.read_csv(file_name)
+    prod_houses_list = list()
+    prod_houses_nums = list()
+    prod_houses_dict = dict()
+
+    for row in dataset.itertuples():
+        test = row.production_companies
+        if type(test) == str and len(test) != 2:
+            test = test.replace("\'", "\"")
+            try:
+                test = loads(test)
+            except:
+                continue
+
+            for a in test:
+                if a["name"] not in prod_houses_dict:
+                    prod_houses_dict[a["name"]] = 1
+                else:
+                    prod_houses_dict[a["name"]] += 1
+    print(prod_houses_dict)
+    sorted_x = sorted(prod_houses_dict.items(), key=operator.itemgetter(1), reverse=True)
+    for tup in sorted_x:
+        if tup[1] >= 500:
+            prod_houses_list.append(tup[0])
+            prod_houses_nums.append(tup[1])
+        else:
+            break
+    objects = prod_houses_list
+    y_pos = np.arange(len(objects))
+    performance = prod_houses_nums
+
+    plt.figure(figsize=(15, 10))
+    plt.bar(y_pos, performance, align='center', alpha=0.5)
+    plt.xticks(y_pos, objects)
+    plt.ylabel('Number of movies')
+    plt.title('Production houses to number of movies')
+
+    plt.show()
+
+
+
+def plot_top_countries():
+
+    file_name = "movies_metadata.csv"
+    dataset = pandas.read_csv(file_name)
+    prod_houses_list = list()
+    prod_houses_nums = list()
+    prod_houses_dict = dict()
+
+
+    for row in dataset.itertuples():
+        test = row.production_countries
+        if type(test) == str and len(test) != 2:
+            test = test.replace("\'", "\"")
+            try:
+                test = loads(test)
+                for a in test:
+                    if a["name"] not in prod_houses_dict:
+                        prod_houses_dict[a["name"]] = 1
+                    else:
+                        prod_houses_dict[a["name"]] += 1
+            except:
+                continue
+
+    print(prod_houses_dict)
+    sorted_x = sorted(prod_houses_dict.items(), key=operator.itemgetter(1), reverse=True)
+    for tup in sorted_x:
+        if tup[1] >= 500:
+            prod_houses_list.append(tup[0])
+            prod_houses_nums.append(tup[1])
+        else:
+            break
+    objects = prod_houses_list
+    y_pos = np.arange(len(objects))
+    performance = prod_houses_nums
+
+    plt.figure(figsize=(15, 10))
+    plt.bar(y_pos, performance, align='center', alpha=0.5)
+    plt.xticks(y_pos, objects)
+    plt.ylabel('Number of movies')
+    plt.title('Production country to number of movies')
+
+    plt.show()
+
 if __name__ == '__main__':
-    get_director_pop_unpop_ratio(200)
+# get_director_pop_unpop_ratio(200)
+#     movie_runtime_plot()
+#     prod_comps()
+    plot_top_countries()

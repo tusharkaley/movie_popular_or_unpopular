@@ -7,6 +7,8 @@ from json import loads
 import operator
 import ast
 
+from sklearn.ensemble import RandomForestClassifier
+
 import movie_popular_or_unpopular.insights as ins
 
 from sklearn import model_selection
@@ -32,10 +34,13 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
     prod_countries = ins.get_production_countries(dataset)
     pop_cast_list, unpop_cast_list = ins.get_actor_pop_unpop_ratio(cast_threshold)
     pop_dir_list, unpop_dir_list = ins.get_director_pop_unpop_ratio(cast_threshold)
-    top_dirs = ins.get_director_insights(cast_threshold)
+    pop_writers_list, unpop_writers_list = ins.get_writers_pop_unpop_ratio(cast_threshold)
+    pop_prod_comps , unpop_prod_comps = ins.get_prod_comps_pop_unpop_ratio()
+
     id_to_cast = ins.get_movie_id_to_cast_dict()
     id_to_director = ins.get_movie_id_to_director_dict()
-    csv_results_header = [["adult", "runtime", "original_language"] + genres_list + prod_comps + prod_countries + ["class"]]
+    id_to_writer = ins.get_movie_id_to_writer_dict()
+    # csv_results_header = [["adult", "runtime", "original_language"] + genres_list + prod_comps + prod_countries + ["class"]]
     csv_name = "movie_dataset_cleaned"
     try:
         os.remove("{}.csv".format(csv_name))
@@ -45,6 +50,8 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
     data = list()
     pop = 0
     unpop = 0
+    cast_processed = 0
+    pc_processed = 0
     languages = list()
     tep = list()
     # genres_dict = dict()
@@ -52,6 +59,8 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
     temp_prod_companies_list = list()
     temp_prod_countries_list = list()
     tmp_cnt = 0
+    pro_count_pop = list()
+    pro_count_unpop = list()
     rogue_ids = ["1997-08-20" , "2012-09-29", "2014-01-01"]
     for row in dataset.itertuples():
         data[:] = []
@@ -74,7 +83,7 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                     data.append(1)
                 else:
                     data.append(0)
-
+            # Added Original Language
             if "original_lang" in features:
                 if row.original_language not in languages:
                     languages.append(row.original_language)
@@ -97,7 +106,6 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                         data.append(0)
                 temp_genres_list = list()
 
-            # Populating the production companies
             if "prod_companies" in features:
                 test = row.production_companies
                 process_prod_comp = True
@@ -112,7 +120,7 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                     if process_prod_comp:
                         for a in test:
                             temp_prod_companies_list.append(a["name"].encode("utf-8"))
-                        for pc in prod_comps[:-1]:
+                        for pc in prod_comps:
                             if pc in temp_prod_companies_list:
                                 data.append(1)
                                 pc_added = True
@@ -125,16 +133,10 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                             data.append(0)
                     else:
                         for pc in prod_comps:
-                            if pc == "other_prod_houses":
-                                data.append(1)
-                            else:
-                                data.append(0)
+                            data.append(0)
                 else:
                     for pc in prod_comps:
-                        if pc == "other_prod_houses":
-                            data.append(1)
-                        else:
-                            data.append(0)
+                        data.append(0)
 
                 temp_prod_companies_list = list()
 
@@ -179,10 +181,10 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                     data.append(1)
                 else:
                     data.append(0)
-            top_count = 0
 
-            if "top_500" in features:
+            if "cast_score" in features:
                 if id in id_to_cast:
+                    cast_processed += 1
                     movie_dir = id_to_cast[id]
                     cast_score = 0
                     for person in movie_dir:
@@ -198,11 +200,9 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                     tmp_cnt += 1
                     data.append(0)
 
-            if "top_count" in features:
-                data.append(top_count)
                 # print("top_count: {}".format(top_count))
 
-            if "top_directors" in features:
+            if "directors_score" in features:
                 if id in id_to_director:
                     movie_dir = id_to_director[id]
                     direct_score = 0
@@ -219,12 +219,28 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                     tmp_cnt += 1
                     data.append(0)
 
+            if "writers_score" in features:
+                if id in id_to_writer:
+                    movie_writer = id_to_writer[id]
+                    writer_score = 0
+                    for person in movie_writer:
+                        if person in pop_writers_list:
+                            writer_score = writer_score + pop_writers_list[person]
+                        if person in unpop_writers_list:
+                            writer_score = writer_score - unpop_writers_list[person]
+                    if writer_score <= 0:
+                        data.append(0)
+                    else:
+                        data.append(1)
+                else:
+                    tmp_cnt += 1
+                    data.append(0)
+
             if "belongs_to_collection" in features:
                 if type(row.belongs_to_collection) != str:
                     data.append(0)
                 else:
                     collection += 1
-                    print("belongs to collection")
                     data.append(1)
             if row.vote_average >= 6.0:
                 pop = pop + 1
@@ -239,11 +255,12 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
             ins.append_to_csv([data], csv_name=csv_name)
 
     print(count)
-    print("Movies in collection : {}".format(collection))
-
     tep = list(set(tep))
+    print("Prod comps processed {}".format(pc_processed))
+    print("Cast processed {}".format(cast_processed))
+
     print("length of temp")
-    print(tep)
+    print(len(languages))
     print("count: {}, popular: {}, unpopular: {}".format(count, pop, unpop))
 
 
@@ -254,7 +271,7 @@ def train_and_cross_validate():
     prod_countries = ins.get_production_countries(dataset)
     genres_list = ins.get_genres(dataset)
     url = "movie_dataset_cleaned.csv"
-    names = ["runtime", "original_language"] + genres_list + prod_comps + prod_countries +["top_500","top_count", "top_directors", "belongs_to_collection"]+["class"]
+    names = ["runtime", "original_language"] + genres_list + prod_comps + prod_countries +["cast_score", "directors_score", "writers_score",  "belongs_to_collection"]+["class"]
     dataset = pandas.read_csv(url, names=names, usecols=names)
     print(dataset.shape)
     # print(dataset.groupby('original_language').size())
@@ -282,6 +299,7 @@ def train_and_cross_validate():
     # models.append(('multinomial-saga', LogisticRegression(solver='saga', multi_class='multinomial')))
 
     models.append(('LR', LogisticRegression(solver='liblinear', multi_class='auto')))
+
     # models.append(('LR', LogisticRegression(solver='newton-cg', multi_class='auto')))
     # models.append(('LR', LogisticRegression(solver='lbfgs', multi_class='auto')))
     # models.append(('LR', LogisticRegression(solver='sag', multi_class='auto')))
@@ -302,7 +320,7 @@ def train_and_cross_validate():
         msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
         print(msg)
     print("SCORES")
-    knn = LogisticRegression(solver='liblinear', multi_class='ovr')
+    knn = LogisticRegression(solver='liblinear', multi_class='auto')
     knn.fit(X_train, Y_train)
     predictions = knn.predict(X_validation)
     print(accuracy_score(Y_validation, predictions))
@@ -311,7 +329,7 @@ def train_and_cross_validate():
 
 
 if __name__ == '__main__':
-    features = ["genres", "prod_companies", "prod_countries", "runtime", "original_lang", "popularity", "top_500", "top_count", "top_directors", "belongs_to_collection"]
+    features = ["genres", "prod_companies", "prod_countries", "runtime", "original_lang", "popularity", "cast_score", "directors_score", "writers_score", "belongs_to_collection"]
     runtime = 100
     transform_csv(features, runtime, 100)
     train_and_cross_validate()
