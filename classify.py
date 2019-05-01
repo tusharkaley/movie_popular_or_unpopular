@@ -6,6 +6,7 @@ import math
 from json import loads
 import operator
 import ast
+import matplotlib.pyplot as plt
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -30,12 +31,17 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
     count = 0
     collection = 0
     genres_list = ins.get_genres(dataset)
+    print("Getting the list of popular production companies")
     prod_comps = ins.get_production_houses(dataset)
+    print("Getting the list of popular production countries")
     prod_countries = ins.get_production_countries(dataset)
+    print("Getting the data on popular and unpopular movie numbers on cast")
     pop_cast_list, unpop_cast_list = ins.get_actor_pop_unpop_ratio(cast_threshold)
+    print("Getting the data on popular and unpopular movie numbers on directors")
     pop_dir_list, unpop_dir_list = ins.get_director_pop_unpop_ratio(cast_threshold)
+    print("Getting the data on popular and unpopular movie numbers on writers")
     pop_writers_list, unpop_writers_list = ins.get_writers_pop_unpop_ratio(cast_threshold)
-    pop_prod_comps , unpop_prod_comps = ins.get_prod_comps_pop_unpop_ratio()
+    # pop_prod_comps , unpop_prod_comps = ins.get_prod_comps_pop_unpop_ratio()
 
     id_to_cast = ins.get_movie_id_to_cast_dict()
     id_to_director = ins.get_movie_id_to_director_dict()
@@ -192,7 +198,7 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                             cast_score = cast_score + pop_cast_list[person]
                         if person in unpop_cast_list:
                             cast_score = cast_score - unpop_cast_list[person]
-                    if cast_score <= 0:
+                    if cast_score < 0:
                         data.append(0)
                     else:
                         data.append(1)
@@ -211,7 +217,7 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                             direct_score = direct_score + pop_dir_list[person]
                         if person in unpop_dir_list:
                             direct_score = direct_score - unpop_dir_list[person]
-                    if direct_score <= 0:
+                    if direct_score < 0:
                         data.append(0)
                     else:
                         data.append(1)
@@ -228,7 +234,7 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                             writer_score = writer_score + pop_writers_list[person]
                         if person in unpop_writers_list:
                             writer_score = writer_score - unpop_writers_list[person]
-                    if writer_score <= 0:
+                    if writer_score < 0:
                         data.append(0)
                     else:
                         data.append(1)
@@ -244,24 +250,21 @@ def transform_csv(features=["genres", "prod_companies", "prod_countries", "adult
                     data.append(1)
             if row.vote_average >= 6.0:
                 pop = pop + 1
-                data.append(0)
+                data.append(1)
             else:
                 unpop = unpop + 1
-                data.append(1)
+                data.append(0)
 
             count = count +1
+            if count % 5000 ==0:
+                print("{} movies processed".format(count))
             # print(count)
             tep.append(len(data))
             ins.append_to_csv([data], csv_name=csv_name)
 
-    print(count)
     tep = list(set(tep))
-    print("Prod comps processed {}".format(pc_processed))
-    print("Cast processed {}".format(cast_processed))
 
-    print("length of temp")
-    print(len(languages))
-    print("count: {}, popular: {}, unpopular: {}".format(count, pop, unpop))
+    print("Total number of movies: {},\n Popular Movies: {}\n, Unpopular Movies: {}".format(count, pop, unpop))
 
 
 def train_and_cross_validate():
@@ -271,12 +274,9 @@ def train_and_cross_validate():
     prod_countries = ins.get_production_countries(dataset)
     genres_list = ins.get_genres(dataset)
     url = "movie_dataset_cleaned.csv"
-    names = ["runtime", "original_language"] + genres_list + prod_comps + prod_countries +["cast_score", "directors_score", "writers_score",  "belongs_to_collection"]+["class"]
+    names = ["runtime", "original_lang"] + genres_list + prod_comps + prod_countries + ["cast_score", "directors_score", "writers_score",  "belongs_to_collection"] + ["class"]
     dataset = pandas.read_csv(url, names=names, usecols=names)
-    print(dataset.shape)
-    # print(dataset.groupby('original_language').size())
     array = dataset.values
-    print(array.shape)
     scoring = 'accuracy'
 
     X = array[:, 0:array.shape[1]-1]
@@ -287,45 +287,28 @@ def train_and_cross_validate():
 
     models = list()
 
-    # models.append(('ovr-liblinear', LogisticRegression(solver='liblinear', multi_class='ovr')))
-    # models.append(('ovr-newton - cg', LogisticRegression(solver='newton-cg', multi_class='ovr')))
-    # models.append(('ovr-lbfgs', LogisticRegression(solver='lbfgs', multi_class='ovr')))
-    # models.append(('ovr-sag', LogisticRegression(solver='sag', multi_class='ovr', max_iter=1000)))
-    # models.append(('ovr-saga', LogisticRegression(solver='saga', multi_class='ovr', max_iter=500)))
-    #
-    # models.append(('multinomial-newton-cg', LogisticRegression(solver='newton-cg', multi_class='multinomial')))
-    # models.append(('multinomial-lbfgs', LogisticRegression(solver='lbfgs', multi_class='multinomial', max_iter=500)))
-    # models.append(('multinomial-sag', LogisticRegression(solver='sag', multi_class='multinomial')))
-    # models.append(('multinomial-saga', LogisticRegression(solver='saga', multi_class='multinomial')))
-
     models.append(('LR', LogisticRegression(solver='liblinear', multi_class='auto')))
-
-    # models.append(('LR', LogisticRegression(solver='newton-cg', multi_class='auto')))
-    # models.append(('LR', LogisticRegression(solver='lbfgs', multi_class='auto')))
-    # models.append(('LR', LogisticRegression(solver='sag', multi_class='auto')))
-    # models.append(('LR', LogisticRegression(solver='saga', multi_class='auto')))
-
     # models.append(('KNN', KNeighborsClassifier()))
     # models.append(('CART', DecisionTreeClassifier()))
     # models.append(('NB', GaussianNB()))
     # models.append(('SVM', SVC(gamma='auto')))
-    # # evaluate each model in turn
-    results = []
+    results = list()
     names = []
     for name, model in models:
         kfold = model_selection.KFold(n_splits=10, random_state=seed)
         cv_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring=scoring)
-        results.append(cv_results)
+        results.append(cv_results.mean()*100)
         names.append(name)
         msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
         print(msg)
-    print("SCORES")
+    print("SCORES\n")
     knn = LogisticRegression(solver='liblinear', multi_class='auto')
     knn.fit(X_train, Y_train)
     predictions = knn.predict(X_validation)
     print(accuracy_score(Y_validation, predictions))
     print(confusion_matrix(Y_validation, predictions))
     print(classification_report(Y_validation, predictions))
+
 
 
 if __name__ == '__main__':

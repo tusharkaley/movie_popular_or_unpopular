@@ -8,6 +8,7 @@ import numpy as np
 
 from json import loads
 
+
 def write_to_csv(data, csv_name="output", csv_dir="/Users/tusharkale/Documents/UF/Workspace/python_workspace/movie_popular_or_unpopular"):
     """
         Function to cleanup the labels added by the 'most_popular_numbers' function
@@ -18,7 +19,6 @@ def write_to_csv(data, csv_name="output", csv_dir="/Users/tusharkale/Documents/U
     """
 
     try:
-        print(data)
         filename = '%s.csv' % csv_name
         file_path = os.path.join(csv_dir, filename)
         with open(file_path, "w") as f:
@@ -75,7 +75,6 @@ def get_directors():
         data.append(crew)
         append_to_csv([data], csv_name=csv_name)
         crew = list()
-        print(count)
 
 
 def get_writers():
@@ -101,7 +100,6 @@ def get_writers():
         data.append(crew)
         append_to_csv([data], csv_name=csv_name)
         crew = list()
-        print(count)
 
 
 def get_genres(dataset):
@@ -149,7 +147,6 @@ def get_production_houses(dataset):
                     prod_houses_dict[a["name"]] = 1
                 else:
                     prod_houses_dict[a["name"]] += 1
-    print(prod_houses_dict)
     sorted_x = sorted(prod_houses_dict.items(), key=operator.itemgetter(1), reverse=True)
     for tup in sorted_x:
         if tup[1]>=500:
@@ -191,6 +188,7 @@ def get_production_countries(dataset):
     prod_countries_list = prod_countries_list+["other_prod_countries"]
     return prod_countries_list
 
+
 def get_cast():
     file_name = "credits.csv"
     dataset = pandas.read_csv(file_name)
@@ -222,7 +220,6 @@ def get_cast_insights(threshold):
     dataset = pandas.read_csv(url)
     for row in dataset.itertuples():
         # print(type(row.cast_mems.split('b"')[1]))
-        print(row)
         test = row.cast_mems
         test = test.replace(", b'", ", '")
         test = test.replace("[b'", "['")
@@ -268,7 +265,6 @@ def get_director_insights(threshold):
     top_500 = list()
     for i in sorted_x:
         line_count+=1
-        print("{}: {}".format(i[0],i[1]))
         top_500.append((i[0]))
         if line_count>threshold:
             break
@@ -344,23 +340,22 @@ def get_actor_pop_unpop_ratio(threshold):
                     else:
                         cast_to_unpop_count[person] += 1
 
-    # sorted_pop = sorted(cast_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
-    # sorted_unpop = sorted(cast_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
-    # pop_count = 0
-    # unpop_count = 0
-    # pop_cast_list = list()
-    # unpop_cast_list = list()
-    # for i in sorted_pop:
-    #     pop_count+=1
-    #     pop_cast_list.append((i[0]))
-    #     if pop_count>threshold:
-    #         break
-    #
-    # for i in sorted_unpop:
-    #     unpop_count+=1
-    #     unpop_cast_list.append((i[0]))
-    #     if unpop_count>threshold:
-    #         break
+    sorted_pop = sorted(cast_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
+    sorted_unpop = sorted(cast_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
+    pop_count = 0
+    unpop_count = 0
+    pop_cast_list = list()
+    unpop_cast_list = list()
+    for i in sorted_pop:
+        pop_count+=1
+        pop_cast_list.append((i[0]))
+        if pop_count>threshold:
+            break
+    for i in sorted_unpop:
+        unpop_count+=1
+        unpop_cast_list.append((i[0]))
+        if unpop_count>threshold:
+            break
 
     return cast_to_pop_count, cast_to_unpop_count
 
@@ -391,23 +386,22 @@ def get_director_pop_unpop_ratio(threshold=200):
                     else:
                         director_to_unpop_count[person] += 1
 
-    # sorted_pop = sorted(director_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
-    # sorted_unpop = sorted(director_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
-    # pop_count = 0
-    # unpop_count = 0
-    # pop_cast_list = list()
-    # unpop_cast_list = list()
-    # for i in sorted_pop:
-    #     pop_count+=1
-    #     pop_cast_list.append((i[0]))
-    #     if pop_count > threshold:
-    #         break
-    #
-    # for i in sorted_unpop:
-    #     unpop_count+=1
-    #     unpop_cast_list.append((i[0]))
-    #     if unpop_count>threshold:
-    #         break
+    sorted_pop = sorted(director_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
+    sorted_unpop = sorted(director_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
+    pop_count = 0
+    unpop_count = 0
+    pop_cast_list = list()
+    unpop_cast_list = list()
+    for i in sorted_pop:
+        pop_count+=1
+        pop_cast_list.append((i[0]))
+        if pop_count > threshold:
+            break
+    for i in sorted_unpop:
+        unpop_count+=1
+        unpop_cast_list.append((i[0]))
+        if unpop_count>threshold:
+            break
 
     return director_to_pop_count, director_to_unpop_count
 
@@ -439,23 +433,23 @@ def get_writers_pop_unpop_ratio(threshold):
                     else:
                         writer_to_unpop_count[person] += 1
 
-    # sorted_pop = sorted(writer_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
-    # sorted_unpop = sorted(writer_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
-    # pop_count = 0
-    # unpop_count = 0
-    # pop_cast_list = list()
-    # unpop_cast_list = list()
-    # for i in sorted_pop:
-    #     pop_count+=1
-    #     pop_cast_list.append((i[0]))
-    #     if pop_count>threshold:
-    #         break
-    #
-    # for i in sorted_unpop:
-    #     unpop_count+=1
-    #     unpop_cast_list.append((i[0]))
-    #     if unpop_count>threshold:
-    #         break
+    sorted_pop = sorted(writer_to_pop_count.items(), key=operator.itemgetter(1), reverse=True)
+    sorted_unpop = sorted(writer_to_unpop_count.items(), key=operator.itemgetter(1), reverse=True)
+    pop_count = 0
+    unpop_count = 0
+    pop_cast_list = list()
+    unpop_cast_list = list()
+    for i in sorted_pop:
+        pop_count+=1
+        pop_cast_list.append((i[0]))
+        if pop_count>threshold:
+            break
+
+    for i in sorted_unpop:
+        unpop_count+=1
+        unpop_cast_list.append((i[0]))
+        if unpop_count>threshold:
+            break
 
     return writer_to_pop_count, writer_to_unpop_count
 
@@ -494,10 +488,8 @@ def get_prod_comps_pop_unpop_ratio():
                             prod_comps_to_unpop_count[pc] = 1
                         else:
                             prod_comps_to_unpop_count[pc] += 1
-    print("Processed count: {}".format(count))
-    print(prod_comps_to_pop_count)
-    print(prod_comps_to_unpop_count)
     return prod_comps_to_pop_count, prod_comps_to_unpop_count
+
 
 def movie_runtime_plot():
     file_name = "movies_metadata.csv"
@@ -529,8 +521,6 @@ def prod_comps_plot(pop_list):
     print(x)
 
 
-# def original_lang():
-
 def prod_comps():
     objects = ('<100', '100-200', '200-300', '300-400', '400-500', '500-600', '700-800', '800-900', '900-1000', '1000-1100', '1100-1200', '1200-1300', '1300-1400','1400-1500', '1500-1600')
     y_pos = np.arange(len(objects))
@@ -543,6 +533,7 @@ def prod_comps():
     plt.title('Number of production houses')
 
     plt.show()
+
 
 def plot_top_companies():
 
@@ -566,7 +557,6 @@ def plot_top_companies():
                     prod_houses_dict[a["name"]] = 1
                 else:
                     prod_houses_dict[a["name"]] += 1
-    print(prod_houses_dict)
     sorted_x = sorted(prod_houses_dict.items(), key=operator.itemgetter(1), reverse=True)
     for tup in sorted_x:
         if tup[1] >= 500:
@@ -587,7 +577,6 @@ def plot_top_companies():
     plt.show()
 
 
-
 def plot_top_countries():
 
     file_name = "movies_metadata.csv"
@@ -595,7 +584,6 @@ def plot_top_countries():
     prod_houses_list = list()
     prod_houses_nums = list()
     prod_houses_dict = dict()
-
 
     for row in dataset.itertuples():
         test = row.production_countries
@@ -611,7 +599,6 @@ def plot_top_countries():
             except:
                 continue
 
-    print(prod_houses_dict)
     sorted_x = sorted(prod_houses_dict.items(), key=operator.itemgetter(1), reverse=True)
     for tup in sorted_x:
         if tup[1] >= 500:
@@ -631,8 +618,72 @@ def plot_top_countries():
 
     plt.show()
 
+
+def plot_cast_comparison(means_popular, means_unpopular, cast):
+    n_groups = 4
+
+    # create plot
+    fig, ax = plt.subplots()
+    index = np.arange(n_groups)
+    bar_width = 0.35
+    opacity = 0.7
+
+    rects1 = plt.bar(index, means_popular, bar_width,
+                     alpha=opacity,
+                     color='g',
+                     label='Popular')
+
+    rects2 = plt.bar(index + bar_width, means_unpopular, bar_width,
+                     alpha=opacity,
+                     color='r',
+                     label='Unpopular')
+
+    plt.xlabel('Writer')
+    plt.ylabel('Number of movies')
+    plt.title('Number of popular and unpopular movies')
+    plt.xticks(index + bar_width, cast)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plt_lines():
+    X = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9"]
+    Y = [57.92, 58.53, 63.01, 85.51, 89.67, 74.80, 79.61, 86.44, 86.35]
+    plt.plot(X, Y)
+    plt.show()
+
+
+def plot_pie():
+
+    # Pie chart, where the slices will be ordered and plotted counter-clockwise:
+    labels = 'Popular', 'Unpopular',
+    sizes = [53.41, 46.59]
+    explode = (0.1, 0)  # only "explode" the 2nd slice (i.e. 'Hogs')
+
+    fig1, ax1 = plt.subplots()
+    ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
+            shadow=True, startangle=90)
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+    plt.show()
+
+
 if __name__ == '__main__':
-# get_director_pop_unpop_ratio(200)
-#     movie_runtime_plot()
-#     prod_comps()
-    plot_top_countries()
+    file_name = "movies_metadata.csv"
+    dataset = pandas.read_csv(file_name)
+    get_production_countries(dataset)
+        # get_director_pop_unpop_ratio(200)
+        # movie_runtime_plot()
+        # prod_comps()
+        # plot_top_countries()
+        # get_actor_pop_unpop_ratio(100)
+        # get_director_pop_unpop_ratio(200)
+        # get_writers_pop_unpop_ratio(200)
+        # means_popular = (17, 18, 8, 13)
+        # means_unpopular = (11, 11, 6, 6)
+        # cast = ('Julius J. Epstein', 'Dudley Nichols', 'Everett Freeman', 'Sylvester Stallone')
+        # plot_cast_comparison(means_popular, means_unpopular, cast)
+        # plt_lines()
+        # plt_lines()
